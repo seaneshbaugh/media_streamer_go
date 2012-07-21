@@ -1,0 +1,10 @@
+{{define "content"}}
+	<ul>
+	  {{$artist := .Artist}}
+		{{with .Albums}}
+			{{range .}}
+				<li><a href="/{{$artist}}/{{.}}">{{.}}</a></li>
+			{{end}}
+		{{end}}
+	</ul>
+{{end}}

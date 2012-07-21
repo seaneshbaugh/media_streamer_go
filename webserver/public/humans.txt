@@ -1,0 +1,21 @@
+/* TEAM */
+  Developer: Sean Eshbaugh
+  Site: http://seaneshbaugh.com/
+  Twitter: http://twitter.com/bungoman
+  Contact: sean (at) seaneshbaugh.com
+
+/* THANKS */
+  Ken Thompson
+  Rob Pike
+  Robert Griesemer
+  Alexis Robert
+
+/* SITE */
+  Created On: 2012/07/03
+  Last Updated: 2012/07/21
+  Language: English
+  Doctype: HTML5
+  Lovingly Made In: TextMate 1.5.11 (1635) and Geany 0.19
+  Lovingly Made On: OSX 10.7 and Windows 7
+  Lovingly Made With: Go
+  Source Available At: https://github.com/seaneshbaugh/media_streamer_go

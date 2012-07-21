@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html dir="ltr" lang="en-US">
+<head>
+  <meta charset="utf-8" />
+  <title>Media Streamer</title>
+  <meta name="description" content="Media Streamer Desktop Server" />
+  <meta name="author" content="Sean Eshbaugh" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="/stylesheets/index.css" media="screen" rel="stylesheet" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+  <![endif]-->
+  <link href="/humans.txt" rel="author" />
+</head>
+<body>
+  <div id="pwd">
+    {{if .pwd}}
+      <h1>Listing Contents of {{.pwd}}</h1>
+    {{end}}
+  </div>
+  {{template "content" .}}
+</body>
+</html>

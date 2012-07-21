@@ -1,0 +1,9 @@
+{{define "content"}}
+	<ul>
+		{{with .Artists}}
+			{{range .}}
+				<li><a href="/{{.}}">{{.}}</a></li>
+			{{end}}
+		{{end}}
+	</ul>
+{{end}}
