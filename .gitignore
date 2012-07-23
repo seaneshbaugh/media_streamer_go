@@ -4,4 +4,4 @@
 *.swp
 *.exe
 *.a
-webserver/webserver
+/media_streamer

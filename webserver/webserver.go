@@ -1,7 +1,7 @@
-package main
+package webserver
 
-import (
-	"flag"
+import(
+	fileutils "../fileutils"
 	"fmt"
 	"io/ioutil"
 	"mime"
@@ -13,14 +13,13 @@ import (
 	"text/template"
 )
 
-const version string = "0.0.1"
-const serverUA = "Media Streamer (Go Edition v. " + version + ")"
-var publicDirectory *string
-var listenPort *string
-var useGZip *bool
-const maxBufferSize = 4096
+const Version string = "0.0.2"
+const ServerUA = "Media Streamer (Go Edition v. " + Version + ")"
+var PublicDirectory *string
+var ListenPort *string
+var MediaDirectory *string
 
-var mediaDirectory *string
+const maxBufferSize = 4096
 
 func min(x int64, y int64) int64 {
 	if x < y {
@@ -31,11 +30,11 @@ func min(x int64, y int64) int64 {
 }
 
 func Handler(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Server", serverUA)
+	w.Header().Set("Server", ServerUA)
 
-	filePath := path.Join((*publicDirectory), path.Clean(r.URL.Path))
+	filePath := path.Join((*PublicDirectory), path.Clean(r.URL.Path))
 
-	fileExists, _ := FileExists(filePath);
+	fileExists, _ := fileutils.FileExists(filePath);
 
 	if fileExists == true && r.URL.Path != "/" {
 		file, _ := os.Open(filePath)
@@ -49,10 +48,10 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 
 			return
 		} else {
-			ServeFile(filePath, w, r)
+			ServeFile(w, r, filePath)
 		}
 	} else {
-		pwd := *mediaDirectory
+		pwd := *MediaDirectory
 
 		requestPath := []string{}
 
@@ -175,30 +174,32 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 			pwd = path.Join(pwd, path.Clean(requestPath[1]))
 			filePath := path.Join(pwd, path.Clean(requestPath[2]))
 
-			ServeFile(filePath, w, r)
+			ServeFile(w, r, filePath)
 		}
 	}
 }
 
-func FileExists(path string) (bool, error) {
-	_, err := os.Stat(path)
+func RenderErrorPage(w http.ResponseWriter, r *http.Request, statusCode int) {
+	w.WriteHeader(statusCode)
 
-	if err == nil {
-		return true, nil
-	}
+	w.Header().Set("Content-Type", "text/html")
 
-	if os.IsNotExist(err) {
-		return false, nil
-	}
+	templateData := make(map[string]interface{})
 
-	return false, err
+	templateData["StatusCode"] = strconv.FormatInt(int64(statusCode), 10)
+
+	templateData["StatusText"] = http.StatusText(statusCode)
+
+	errorTemplate := template.Must(template.ParseFiles("templates/layout.html", "templates/error.html"))
+
+	errorTemplate.Execute(w, templateData)
 }
 
-func ServeFile(filePath string, w http.ResponseWriter, r *http.Request) {
+func ServeFile(w http.ResponseWriter, r *http.Request, filePath string) {
 	file, err := os.Open(filePath)
 
 	if err != nil {
-		http.Error(w, "404 Not Found", 404)
+		RenderErrorPage(w, r, http.StatusNotFound)
 
 		return
 	}
@@ -208,13 +209,13 @@ func ServeFile(filePath string, w http.ResponseWriter, r *http.Request) {
 	fileInfo, err := file.Stat()
 
 	if err != nil {
-		http.Error(w, "500 Internal Server Error", 500)
+		RenderErrorPage(w, r, http.StatusInternalServerError)
 
 		return
 	}
 
-	if fileInfo.IsDir() || fileInfo.Mode()&os.ModeSocket != 0 {
-		http.Error(w, "403 Forbidden", 403)
+	if fileInfo.Mode()&os.ModeDir != 0 || fileInfo.Mode()&os.ModeSocket != 0 || fileInfo.Mode()&os.ModeDevice != 0 {
+		RenderErrorPage(w, r, http.StatusForbidden)
 
 		return
 	}
@@ -237,29 +238,4 @@ func ServeFile(filePath string, w http.ResponseWriter, r *http.Request) {
 		n, err = file.Read(buffer)
 		w.Write(buffer[0:n])
 	}
-}
-
-func main() {
-	fmt.Printf(">> Starting Media Streamer Webserver (Go Edition v. " + version + ")\n")
-
-	pwd, err := os.Getwd()
-
-	if err != nil {
-		fmt.Printf("FATAL: Could not get current working directory!\n")
-
-		return
-	}
-
-	publicDirectory = flag.String("d", pwd + "/public", "Public Directory")
-	listenPort = flag.String("p", "4568", "Listen Port")
-	useGZip = flag.Bool("c", true, "Enable GZip compression")
-	mediaDirectory = flag.String("m", "/Users/seshbaugh/Music/iTunes/iTunes Media/", "Media Directory")
-
-	flag.Parse()
-
-	fmt.Printf(">> Go application starting on http://0.0.0.0:" + *listenPort + "\n")
-	fmt.Printf(">> ctrl+c to shutdown server\n")
-	fmt.Printf(">> pid=" + strconv.Itoa(os.Getpid()) + "\n")
-
-	http.ListenAndServe(":" + *listenPort, http.HandlerFunc(Handler))
 }
